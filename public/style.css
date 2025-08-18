@@ -1,0 +1,79 @@
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; padding: 0; color: #111; background: #f7f7fb;
+}
+header { padding: 24px 20px 0; text-align: center; }
+header h1 { margin: 0 0 8px; }
+header p { margin: 0 0 16px; color: #444; }
+
+main { max-width: 980px; margin: 20px auto; padding: 0 16px; }
+
+.panel {
+  background: #fff; border: 1px solid #e6e6ef; border-radius: 12px;
+  padding: 16px 16px 20px; margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+
+.dropzone {
+  border: 2px dashed #a6a6bf; border-radius: 12px; padding: 28px; text-align: center;
+  background: #fafaff; color: #333; margin-bottom: 16px; position: relative;
+}
+.dropzone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.dropzone .link { color: #3a4bff; text-decoration: underline; }
+
+.grid {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.formats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.formats label { background: #f3f3ff; border: 1px solid #dcdcf9; padding: 6px 10px; border-radius: 8px; }
+
+.actions {
+  display: flex; align-items: center; gap: 12px; margin-top: 12px;
+}
+button {
+  appearance: none; border: none; border-radius: 10px; padding: 10px 16px;
+  background: #3a4bff; color: white; font-weight: 600; cursor: pointer;
+}
+button:disabled { background: #9aa0ff; cursor: not-allowed; }
+#status { color: #333; }
+
+.hidden { display: none; }
+#fileList { margin: 0; padding-left: 18px; }
+#fileList li { margin: 4px 0; }
+footer { text-align: center; padding: 8px 0 24px; color: #666; }
+label { display: block; font-weight: 600; margin-bottom: 6px; }
+small { color: #666; }
+input[type="range"] { width: 100%; }
+
+.help {
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 4px;
+  background: #f9f9ff;
+  padding: 6px 8px;
+  border-left: 3px solid #3a4bff;
+  border-radius: 4px;
+}
+footer {
+  text-align: center;
+  padding: 16px 0 32px;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.credits {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+  font-size: 0.85em;
+  color: #444;
+}
+
+.credits b {
+  color: #000;
+}
+

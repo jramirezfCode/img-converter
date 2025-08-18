@@ -1,0 +1,17 @@
+{
+  "name": "img-converter-local",
+  "version": "1.0.0",
+  "description": "Conversor masivo de imágenes local con quality/effort y salida a múltiples formatos (especial WebP).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "archiver": "^6.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.4"
+  }
+}

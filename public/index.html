@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Conversor de Imágenes (Local)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+   <link rel="icon" type="image/png" href="./img/photos_3261796.png">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Conversor Masivo Local</h1>
+    <p>Convierte imágenes a <b>WEBP, AVIF, JPEG, PNG, TIFF</b> con opciones de <b>calidad</b> y <b>compresión</b>.</p>
+  </header>
+
+  <main>
+    <!-- PANEL PRINCIPAL -->
+    <section class="panel">
+      <form id="convertForm" aria-label="Formulario de conversión de imágenes">
+
+        <!-- Dropzone -->
+        <div class="dropzone" id="dropzone">
+          <input id="fileInput" type="file" name="images" multiple accept="image/*" aria-label="Seleccionar imágenes" />
+          <p><b>Arrastra aquí</b> o <span class="link">haz clic</span> para elegir imágenes</p>
+          <small>Formatos comunes: JPG, PNG, WEBP, TIFF, AVIF (según soporte).</small>
+        </div>
+
+        <!-- Controles -->
+        <div class="grid">
+          <!-- Formatos -->
+          <div>
+            <label>Formatos de salida:</label>
+            <div class="formats" role="group" aria-label="Formatos de salida">
+              <label><input type="checkbox" name="formats" value="webp" checked> WEBP</label>
+              <label><input type="checkbox" name="formats" value="avif"> AVIF</label>
+              <label><input type="checkbox" name="formats" value="jpeg"> JPEG</label>
+              <label><input type="checkbox" name="formats" value="png"> PNG</label>
+              <label><input type="checkbox" name="formats" value="tiff"> TIFF</label>
+            </div>
+          </div>
+
+          <!-- Quality -->
+          <div>
+            <label for="quality">Quality (1–100): <span id="qualityVal">80</span></label>
+            <input id="quality" name="quality" type="range" min="1" max="100" value="80" />
+          </div>
+
+          <!-- Effort -->
+          <div>
+            <label for="effort">Effort (0–9): <span id="effortVal">4</span></label>
+            <input id="effort" name="effort" type="range" min="0" max="9" value="4" />
+          </div>
+
+          <!-- WebP lossless -->
+          <div>
+            <label><input type="checkbox" name="lossless" id="lossless" value="true"> WebP Lossless</label>
+          </div>
+
+          <!-- JPEG mozjpeg -->
+          <div>
+            <label><input type="checkbox" name="mozjpeg" id="mozjpeg" value="true"> JPEG (mozjpeg)</label>
+          </div>
+
+          <!-- PNG compressionLevel -->
+          <div>
+            <label for="pngCompressionLevel">PNG compressionLevel (0–9): <span id="pngCompVal">6</span></label>
+            <input id="pngCompressionLevel" name="pngCompressionLevel" type="range" min="0" max="9" value="6" />
+          </div>
+        </div>
+
+        <!-- Acción -->
+        <div class="actions">
+          <button type="submit" id="convertBtn">Convertir y descargar ZIP</button>
+          <span id="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- Lista de archivos seleccionados -->
+    <section id="queue" class="panel hidden">
+      <h2>Archivos listos:</h2>
+      <ul id="fileList"></ul>
+    </section>
+
+  
+         <!-- SECCIÓN DE EXPLICACIONES -->
+   
+    <section class="panel" id="ayuda">
+      <h2>📘 Guía rápida de opciones</h2>
+
+      <details open>
+        <summary><b>Formatos de salida</b></summary>
+        <ul>
+          <li><b>WEBP</b>: buena calidad/peso, muy compatible en web.</li>
+          <li><b>AVIF</b>: compresión excelente; puede ser más lento de codificar.</li>
+          <li><b>JPEG</b>: clásico con pérdidas, ideal para fotos.</li>
+          <li><b>PNG</b>: sin pérdidas; perfecto para gráficos/íconos/transparencias.</li>
+          <li><b>TIFF</b>: uso profesional/archivo; archivos más pesados.</li>
+        </ul>
+        <p>✔️ Puedes marcar varios; cada imagen se convierte a todos los formatos seleccionados.</p>
+      </details>
+
+      <details>
+        <summary><b>Quality (1–100)</b></summary>
+        <p>Controla la <b>calidad visual</b> (principalmente en WEBP/AVIF/JPEG):</p>
+        <ul>
+          <li><b>100</b> = máxima calidad, archivos grandes.</li>
+          <li><b>1</b> = mínima calidad, archivos muy pequeños.</li>
+          <li><b>Recomendado</b>: 70–85 para buen balance.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary><b>Effort (0–9)</b></summary>
+        <p>Define cuánto “esfuerzo” pone el compresor (más esfuerzo = mejor compresión pero más lento):</p>
+        <ul>
+          <li><b>0</b>: muy rápido, menos eficiente.</li>
+          <li><b>9</b>: muy lento, máxima compresión.</li>
+          <li>WEBP usa 0–6; AVIF usa 0–9.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary><b>WebP Lossless</b></summary>
+        <p>Convierte a <b>WebP sin pérdidas</b> (la imagen queda idéntica al original). Los archivos pueden ser más grandes.</p>
+      </details>
+
+      <details>
+        <summary><b>JPEG (mozjpeg)</b></summary>
+        <p>Usa un codificador optimizado para JPEG que mejora la compresión y los artefactos a igual calidad.</p>
+      </details>
+
+      <details>
+        <summary><b>PNG compressionLevel (0–9)</b></summary>
+        <ul>
+          <li><b>0</b>: sin compresión (rápido; archivos grandes).</li>
+          <li><b>9</b>: máxima compresión (lento; archivos pequeños).</li>
+          <li>La calidad en PNG es siempre sin pérdidas.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary><b>Consejos</b></summary>
+        <ul>
+          <li>Para web: prueba <b>WEBP</b> con <b>quality 75–85</b> y <b>effort 4</b>.</li>
+          <li>Para máxima compresión: <b>AVIF</b> con <b>quality 45–60</b>, <b>effort 6–8</b>.</li>
+          <li>Para logos/íconos: <b>PNG</b> (compressionLevel 6–9) o <b>WEBP lossless</b>.</li>
+        </ul>
+      </details>
+    </section>
+  </main>
+
+  <!-- Pie y créditos -->
+  <footer>
+    <small>
+      Todo corre <b>en tu PC</b> (offline).
+    </small>
+
+    <div class="credits">
+      <p>🌐 App web realizada por <b>Juan Ramírez</b>, <b>Yordan Hernández</b> y <b>Maribel Ruíz</b></p>
+      <p>📜 CopyRight 2025 - Grupo Whatsapp Diseñadores Web</p>
+    </div>
+  </footer>
+
+  <script src="client.js"></script>
+</body>
+</html>
