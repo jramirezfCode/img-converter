@@ -1,54 +1,166 @@
 /* ── REFERENCIAS DOM ── */
-const fileInput    = document.getElementById('fileInput');
-const dropzone     = document.getElementById('dropzone');
-const browseBtn    = document.getElementById('browseBtn');
-const form         = document.getElementById('convertForm');
-const statusEl     = document.getElementById('status');
-const quality      = document.getElementById('quality');
-const qualityVal   = document.getElementById('qualityVal');
-const effort       = document.getElementById('effort');
-const effortVal    = document.getElementById('effortVal');
-const pngComp      = document.getElementById('pngCompressionLevel');
-const pngCompVal   = document.getElementById('pngCompVal');
-const fileList     = document.getElementById('fileList');
-const fileQueue    = document.getElementById('fileQueue');
-const queueCount   = document.getElementById('queueCount');
-const clearBtn     = document.getElementById('clearBtn');
-const convertBtn   = document.getElementById('convertBtn');
-const btnLabel     = document.getElementById('btnLabel');
-const btnSpinner   = document.getElementById('btnSpinner');
-const progressWrap = document.getElementById('progressWrap');
-const progressBar  = document.getElementById('progressBar');
-const progressPct  = document.getElementById('progressPct');
-const progressLabel= document.getElementById('progressLabel');
+const fileInput      = document.getElementById('fileInput');
+const dropzone       = document.getElementById('dropzone');
+const browseBtn      = document.getElementById('browseBtn');
+const form           = document.getElementById('convertForm');
+const statusEl       = document.getElementById('status');
+const quality        = document.getElementById('quality');
+const qualityVal     = document.getElementById('qualityVal');
+const effort         = document.getElementById('effort');
+const effortVal      = document.getElementById('effortVal');
+const pngComp        = document.getElementById('pngCompressionLevel');
+const pngCompVal     = document.getElementById('pngCompVal');
+const thumbGrid      = document.getElementById('thumbGrid');
+const fileQueue      = document.getElementById('fileQueue');
+const queueCount     = document.getElementById('queueCount');
+const clearBtn       = document.getElementById('clearBtn');
+const convertBtn     = document.getElementById('convertBtn');
+const btnLabel       = document.getElementById('btnLabel');
+const btnSpinner     = document.getElementById('btnSpinner');
+const progressWrap   = document.getElementById('progressWrap');
+const progressBar    = document.getElementById('progressBar');
+const progressPct    = document.getElementById('progressPct');
+const progressLabel  = document.getElementById('progressLabel');
+const maxWidthInput  = document.getElementById('maxWidth');
+const renamePrefix   = document.getElementById('renamePrefix');
+const renameStart    = document.getElementById('renameStart');
+const resultsWrap    = document.getElementById('resultsWrap');
+const resultsBody    = document.getElementById('resultsBody');
+const resultsSummary = document.getElementById('resultsSummary');
+const resizeEnabled  = document.getElementById('resizeEnabled');
+const renameEnabled  = document.getElementById('renameEnabled');
+const resizeGroup    = document.getElementById('resizeGroup');
+const renameGroup    = document.getElementById('renameGroup');
+const previewEmpty   = document.getElementById('previewEmpty');
 
 /* ── SLIDERS ── */
 quality.addEventListener('input', () => qualityVal.textContent = quality.value);
 effort.addEventListener('input',  () => effortVal.textContent  = effort.value);
 pngComp.addEventListener('input', () => pngCompVal.textContent = pngComp.value);
 
-/* ── LISTA DE ARCHIVOS ── */
+/* ── TOGGLES DE SECCIONES OPCIONALES ── */
+function syncResizeState() {
+  const on = resizeEnabled.checked;
+  maxWidthInput.disabled = !on;
+  resizeGroup.classList.toggle('is-disabled', !on);
+}
+function syncRenameState() {
+  const on = renameEnabled.checked;
+  renamePrefix.disabled = !on;
+  renameStart.disabled  = !on;
+  renameGroup.classList.toggle('is-disabled', !on);
+}
+resizeEnabled.addEventListener('change', syncResizeState);
+renameEnabled.addEventListener('change', syncRenameState);
+syncResizeState();
+syncRenameState();
+
+/* ── UTILIDADES ── */
 function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—';
   if (bytes < 1024)      return bytes + ' B';
   if (bytes < 1024*1024) return Math.round(bytes / 1024) + ' KB';
   return (bytes / (1024*1024)).toFixed(1) + ' MB';
 }
 
-function refreshList(files) {
-  if (!files || !files.length) { fileQueue.classList.add('hidden'); fileList.innerHTML = ''; return; }
-  fileQueue.classList.remove('hidden');
-  queueCount.textContent = `${files.length} archivo${files.length > 1 ? 's' : ''}`;
-  fileList.innerHTML = '';
-  [...files].forEach(f => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="f-dot"></span><span class="f-name">${f.name}</span><span class="f-size">${formatBytes(f.size)}</span>`;
-    fileList.appendChild(li);
-  });
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-fileInput.addEventListener('change', e => refreshList(e.target.files));
-browseBtn.addEventListener('click',  () => fileInput.click());
-clearBtn.addEventListener('click',   () => { fileInput.value = ''; refreshList(null); });
+/* ── ESTADO VACÍO DE LA COLUMNA 3 ──
+   La sección 3 siempre está visible. Muestra el estado vacío si no hay
+   archivos ni resultados; lo oculta cuando aparece uno de los dos. */
+function updateEmptyState() {
+  const hasFiles   = !fileQueue.classList.contains('hidden');
+  const hasResults = !resultsWrap.classList.contains('hidden');
+  previewEmpty.classList.toggle('hidden', hasFiles || hasResults);
+}
+
+/* ── MINIATURAS ── */
+let activeThumbUrls = [];
+
+function clearThumbnails() {
+  for (const url of activeThumbUrls) {
+    try { URL.revokeObjectURL(url); } catch {}
+  }
+  activeThumbUrls = [];
+  thumbGrid.innerHTML = '';
+}
+
+function renderThumbnails(files) {
+  clearThumbnails();
+
+  if (!files || !files.length) {
+    fileQueue.classList.add('hidden');
+    updateEmptyState();
+    return;
+  }
+
+  fileQueue.classList.remove('hidden');
+  queueCount.textContent = `${files.length} archivo${files.length > 1 ? 's' : ''}`;
+
+  const frag = document.createDocumentFragment();
+
+  [...files].forEach((f) => {
+    const card = document.createElement('div');
+    card.className = 'thumb';
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'thumb-img-wrap';
+
+    const url = URL.createObjectURL(f);
+    activeThumbUrls.push(url);
+
+    const img = document.createElement('img');
+    img.className = 'thumb-img';
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.src = url;
+
+    img.addEventListener('error', () => {
+      img.remove();
+      const fb = document.createElement('div');
+      fb.className = 'thumb-fallback';
+      fb.textContent = 'Sin vista previa';
+      imgWrap.appendChild(fb);
+    });
+
+    imgWrap.appendChild(img);
+
+    const meta = document.createElement('div');
+    meta.className = 'thumb-meta';
+    meta.innerHTML = `
+      <span class="thumb-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+      <span class="thumb-size">${formatBytes(f.size)}</span>
+    `;
+
+    card.appendChild(imgWrap);
+    card.appendChild(meta);
+    frag.appendChild(card);
+  });
+
+  thumbGrid.appendChild(frag);
+  updateEmptyState();
+}
+
+fileInput.addEventListener('change', e => {
+  renderThumbnails(e.target.files);
+  hideResults();
+});
+
+browseBtn.addEventListener('click', () => fileInput.click());
+
+clearBtn.addEventListener('click', () => {
+  fileInput.value = '';
+  renderThumbnails(null);
+  hideResults();
+});
 
 /* ── DRAG & DROP ── */
 ['dragenter','dragover'].forEach(evt =>
@@ -57,7 +169,11 @@ clearBtn.addEventListener('click',   () => { fileInput.value = ''; refreshList(n
 ['dragleave','drop'].forEach(evt =>
   dropzone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropzone.classList.remove('drag-over'); })
 );
-dropzone.addEventListener('drop', e => { fileInput.files = e.dataTransfer.files; refreshList(fileInput.files); });
+dropzone.addEventListener('drop', e => {
+  fileInput.files = e.dataTransfer.files;
+  renderThumbnails(fileInput.files);
+  hideResults();
+});
 
 /* ── BARRA DE PROGRESO ── */
 let progressTimer = null;
@@ -85,7 +201,6 @@ function completeProgress() {
 }
 
 function startFakeProgress() {
-  // Fases: [hasta, incremento cada tick, ms entre ticks, mensaje]
   const phases = [
     [15, 3,   100, 'Subiendo imágenes…'],
     [45, 1.5, 180, 'Convirtiendo formatos…'],
@@ -129,15 +244,89 @@ function setStatus(msg, type = '') {
   statusEl.className = 'status-msg' + (type ? ` ${type}` : '');
 }
 
+/* ── TABLA DE RESULTADOS ── */
+function hideResults() {
+  resultsWrap.classList.add('hidden');
+  resultsBody.innerHTML = '';
+  resultsSummary.textContent = '';
+  updateEmptyState();
+}
+
+function reductionBadgeClass(reduction) {
+  if (reduction === null || reduction === undefined || Number.isNaN(reduction)) return 'reduction-error';
+  if (reduction > 50) return 'reduction-good';
+  if (reduction < 20) return 'reduction-bad';
+  return 'reduction-medium';
+}
+
+function renderResults(stats) {
+  if (!Array.isArray(stats) || !stats.length) {
+    hideResults();
+    return;
+  }
+
+  let totalOriginal  = 0;
+  let totalConverted = 0;
+  let validCount     = 0;
+
+  const rows = stats.map(s => {
+    const hasError = !!s.error;
+    const reduction = (typeof s.reduction === 'number') ? s.reduction : null;
+    const badgeClass = hasError ? 'reduction-error' : reductionBadgeClass(reduction);
+    const badgeText  = hasError
+      ? 'Error'
+      : (reduction === null ? '—' : (reduction > 0 ? `−${reduction}%` : `${reduction}%`));
+
+    if (!hasError) {
+      totalOriginal  += Number(s.originalSize)  || 0;
+      totalConverted += Number(s.convertedSize) || 0;
+      validCount++;
+    }
+
+    const fmt = (s.format || '').toUpperCase();
+
+    return `
+      <tr>
+        <td class="r-name" title="${escapeHtml(s.originalName)}">
+          ${escapeHtml(s.originalName)}${fmt ? ` <em>· ${escapeHtml(fmt)}</em>` : ''}
+        </td>
+        <td class="r-num">${formatBytes(s.originalSize)}</td>
+        <td class="r-num">${hasError ? '—' : formatBytes(s.convertedSize)}</td>
+        <td class="r-badge"><span class="reduction-badge ${badgeClass}">${badgeText}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  resultsBody.innerHTML = rows;
+
+  if (validCount > 0 && totalOriginal > 0) {
+    const totalRed = Math.round(((totalOriginal - totalConverted) / totalOriginal) * 1000) / 10;
+    const sign = totalRed > 0 ? '−' : (totalRed < 0 ? '+' : '');
+    resultsSummary.textContent =
+      `${validCount} archivo${validCount > 1 ? 's' : ''} · ` +
+      `${formatBytes(totalOriginal)} → ${formatBytes(totalConverted)} · ` +
+      `${sign}${Math.abs(totalRed)}% total`;
+  } else {
+    resultsSummary.textContent = `${stats.length} archivo${stats.length > 1 ? 's' : ''}`;
+  }
+
+  resultsWrap.classList.remove('hidden');
+  updateEmptyState();
+}
+
 /* ── SUBMIT ── */
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   setStatus('');
+  hideResults();
 
   if (!fileInput.files.length) { setStatus('Primero selecciona al menos una imagen.', 'err'); return; }
 
   const formats = [...document.querySelectorAll('input[name="formats"]:checked')].map(i => i.value);
   if (!formats.length) { setStatus('Selecciona al menos un formato de salida.', 'err'); return; }
+
+  const resizeOn = resizeEnabled.checked;
+  const renameOn = renameEnabled.checked;
 
   const fd = new FormData();
   for (const f of fileInput.files) fd.append('images', f);
@@ -148,6 +337,9 @@ form.addEventListener('submit', async (e) => {
   fd.append('mozjpeg',             document.getElementById('mozjpeg').checked   ? 'true' : 'false');
   fd.append('stripMeta',           document.getElementById('stripMeta').checked ? 'true' : 'false');
   fd.append('pngCompressionLevel', pngComp.value);
+  fd.append('maxWidth',            resizeOn ? (maxWidthInput.value || '0') : '0');
+  fd.append('renamePrefix',        renameOn ? (renamePrefix.value || '').trim() : '');
+  fd.append('renameStart',         renameOn ? (renameStart.value || '1') : '1');
 
   setLoading(true);
   showProgress();
@@ -165,7 +357,6 @@ form.addEventListener('submit', async (e) => {
 
       hideProgress();
 
-      // Si es error de sharp, mostrar instrucción clara
       if (errMsg.includes('sharp') || errMsg.includes('npm install')) {
         statusEl.innerHTML = `
           <div class="sharp-error">
@@ -180,16 +371,27 @@ form.addEventListener('submit', async (e) => {
       return;
     }
 
-    const blob = await resp.blob();
+    const data = await resp.json();
+    if (!data || !data.downloadId) {
+      hideProgress();
+      setStatus('Respuesta inválida del servidor.', 'err');
+      return;
+    }
+
     completeProgress();
+    await new Promise(r => setTimeout(r, 400));
 
-    await new Promise(r => setTimeout(r, 600));
+    // Descargar pasando el nombre con timestamp al servidor
+    const filename = zipFileName();
+    const a = document.createElement('a');
+    a.href = '/download/' + encodeURIComponent(data.downloadId) +
+             '?name=' + encodeURIComponent(filename);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-    const url = URL.createObjectURL(blob);
-    const a   = document.createElement('a');
-    a.href = url; a.download = zipFileName();
-    document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(url);
+    renderResults(data.stats || []);
 
     setStatus('¡ZIP descargado correctamente!', 'ok');
     setTimeout(hideProgress, 3000);
@@ -202,3 +404,6 @@ form.addEventListener('submit', async (e) => {
     setLoading(false);
   }
 });
+
+/* Inicializa el estado vacío visible */
+updateEmptyState();

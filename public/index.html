@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="./img/photos_3261796.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -30,12 +30,15 @@
     </div>
   </header>
 
-  <!-- Un solo form que envuelve TODO -->
   <form id="convertForm" autocomplete="off">
   <main class="layout">
 
-    <!-- IZQUIERDA: subida + botón -->
-    <section class="col col-left">
+    <!-- ── SECCIÓN 1: SUBIR Y CONVERTIR ── -->
+    <section class="col col-action">
+      <div class="section-title">
+        <span class="section-num">1</span>
+        <h2>Subir y convertir</h2>
+      </div>
 
       <div class="dropzone" id="dropzone">
         <input id="fileInput" type="file" name="images" multiple accept="image/*" />
@@ -49,15 +52,6 @@
         </div>
       </div>
 
-      <div class="file-queue hidden" id="fileQueue">
-        <div class="queue-header">
-          <span class="queue-count" id="queueCount">0 archivos</span>
-          <button type="button" class="clear-btn" id="clearBtn">Limpiar</button>
-        </div>
-        <ul class="file-list" id="fileList"></ul>
-      </div>
-
-      <!-- Barra de progreso -->
       <div class="progress-wrap hidden" id="progressWrap">
         <div class="progress-header">
           <span class="progress-label" id="progressLabel">Procesando…</span>
@@ -75,25 +69,69 @@
         </button>
         <p class="status-msg" id="status" aria-live="polite"></p>
       </div>
-
     </section>
 
-    <!-- DERECHA: opciones -->
-    <section class="col col-right">
+    <!-- ── SECCIÓN 2: OPCIONES DE CONVERSIÓN ── -->
+    <section class="col col-options">
+      <div class="section-title">
+        <span class="section-num">2</span>
+        <h2>Opciones de conversión</h2>
+      </div>
 
-        <div class="opt-group">
-          <label class="opt-label">Formato de salida</label>
-          <div class="format-pills" role="group">
-            <label class="pill"><input type="checkbox" name="formats" value="webp" checked><span>WEBP</span></label>
-            <label class="pill"><input type="checkbox" name="formats" value="avif"><span>AVIF</span></label>
-            <label class="pill"><input type="checkbox" name="formats" value="jpeg"><span>JPEG</span></label>
-            <label class="pill"><input type="checkbox" name="formats" value="png"><span>PNG</span></label>
-            <label class="pill"><input type="checkbox" name="formats" value="tiff"><span>TIFF</span></label>
+      <!-- Formato: ancho completo porque son pills que se benefician de espacio horizontal -->
+      <div class="opt-group opt-full">
+        <label class="opt-label">Formato de salida</label>
+        <div class="format-pills" role="group">
+          <label class="pill"><input type="checkbox" name="formats" value="webp" checked><span>WEBP</span></label>
+          <label class="pill"><input type="checkbox" name="formats" value="avif"><span>AVIF</span></label>
+          <label class="pill"><input type="checkbox" name="formats" value="jpeg"><span>JPEG</span></label>
+          <label class="pill"><input type="checkbox" name="formats" value="png"><span>PNG</span></label>
+          <label class="pill"><input type="checkbox" name="formats" value="tiff"><span>TIFF</span></label>
+        </div>
+      </div>
+
+      <!-- Grid de 2 columnas para el resto de opciones -->
+      <div class="options-grid">
+
+        <!-- Redimensionar -->
+        <div class="opt-group is-disabled" id="resizeGroup">
+          <div class="opt-head">
+            <label class="opt-label" for="maxWidth">Redimensionar</label>
+            <label class="toggle toggle-inline" title="Activar redimensionado">
+              <input type="checkbox" id="resizeEnabled">
+              <span class="t-track"><span class="t-thumb"></span></span>
+            </label>
           </div>
+          <div class="input-row">
+            <input class="input-num" type="number" id="maxWidth" name="maxWidth" value="1200" min="1" max="20000" step="1" disabled>
+            <span class="input-suffix">px de ancho máximo</span>
+          </div>
+          <p class="opt-hint">El <strong>alto se calcula automáticamente</strong> para mantener la proporción. Ejemplo: 3000×2000 → 1200×800.</p>
         </div>
 
-        <div class="divider"></div>
+        <!-- Renombrado -->
+        <div class="opt-group is-disabled" id="renameGroup">
+          <div class="opt-head">
+            <label class="opt-label">Renombrado en lote</label>
+            <label class="toggle toggle-inline" title="Activar renombrado">
+              <input type="checkbox" id="renameEnabled">
+              <span class="t-track"><span class="t-thumb"></span></span>
+            </label>
+          </div>
+          <div class="rename-grid">
+            <div class="rename-field">
+              <span class="rename-lbl">Prefijo</span>
+              <input class="input-text" type="text" id="renamePrefix" name="renamePrefix" placeholder="ej: clinica-pilar" maxlength="40" disabled>
+            </div>
+            <div class="rename-field rename-num-field">
+              <span class="rename-lbl">Inicio</span>
+              <input class="input-num" type="number" id="renameStart" name="renameStart" value="1" min="0" max="99999" step="1" disabled>
+            </div>
+          </div>
+          <p class="opt-hint">Si está apagado, se conserva el <strong>nombre original</strong> de cada archivo.</p>
+        </div>
 
+        <!-- Calidad -->
         <div class="opt-group">
           <div class="slider-header">
             <label class="opt-label" for="quality">Calidad</label>
@@ -103,6 +141,7 @@
           <div class="slider-labels"><span>Mínima</span><span>Máxima</span></div>
         </div>
 
+        <!-- Esfuerzo -->
         <div class="opt-group">
           <div class="slider-header">
             <label class="opt-label" for="effort">Esfuerzo de compresión</label>
@@ -112,6 +151,7 @@
           <div class="slider-labels"><span>0 · Rápido</span><span>9 · Máximo</span></div>
         </div>
 
+        <!-- Compresión PNG -->
         <div class="opt-group">
           <div class="slider-header">
             <label class="opt-label" for="pngCompressionLevel">Compresión PNG</label>
@@ -121,8 +161,7 @@
           <div class="slider-labels"><span>0</span><span>9</span></div>
         </div>
 
-        <div class="divider"></div>
-
+        <!-- Opciones avanzadas -->
         <div class="opt-group">
           <label class="opt-label">Opciones avanzadas</label>
           <div class="toggle-list">
@@ -144,30 +183,89 @@
           </div>
         </div>
 
-        <div class="divider"></div>
+      </div>
+    </section>
 
-        <div class="opt-group">
-          <label class="opt-label">Referencia rápida</label>
-          <div class="guide-list">
-            <details class="g-item">
-              <summary>Formatos de salida</summary>
-              <p><strong>WEBP</strong> — Ideal para web, buen peso/calidad.<br>
-              <strong>AVIF</strong> — Mejor compresión, más lento de codificar.<br>
-              <strong>JPEG</strong> — Fotos con pérdidas, clásico y compatible.<br>
-              <strong>PNG</strong> — Sin pérdidas, ideal para transparencias.<br>
-              <strong>TIFF</strong> — Uso profesional y archivo.</p>
-            </details>
-            <details class="g-item">
-              <summary>Calidad y esfuerzo</summary>
-              <p>Calidad <strong>70–85</strong> es el punto óptimo para web. Mayor esfuerzo produce archivos más pequeños pero tarda más.</p>
-            </details>
-            <details class="g-item">
-              <summary>Eliminar metadatos</summary>
-              <p>Quita EXIF, GPS, creador, software y perfil ICC. Reduce el peso del archivo y protege tu privacidad al compartir.</p>
-            </details>
-          </div>
+    <!-- ── SECCIÓN 3: ARCHIVOS Y RESULTADOS ── -->
+    <section class="col col-preview" id="previewSection">
+      <div class="section-title">
+        <span class="section-num">3</span>
+        <h2>Archivos y resultados</h2>
+      </div>
+
+      <div class="preview-empty" id="previewEmpty">
+        <div class="preview-empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
+        <p class="preview-empty-title">Aún no hay archivos</p>
+        <p class="preview-empty-text">Las miniaturas de tus imágenes aparecerán aquí. Después de convertir, verás una tabla con el peso de cada archivo y el porcentaje de reducción.</p>
+      </div>
 
+      <div class="file-queue hidden" id="fileQueue">
+        <div class="queue-header">
+          <span class="queue-count" id="queueCount">0 archivos</span>
+          <button type="button" class="clear-btn" id="clearBtn">Limpiar</button>
+        </div>
+        <div class="thumb-grid" id="thumbGrid"></div>
+      </div>
+
+      <div class="results-wrap hidden" id="resultsWrap">
+        <div class="results-header">
+          <span class="results-title">Resultados de la conversión</span>
+          <span class="results-summary" id="resultsSummary"></span>
+        </div>
+        <div class="results-scroll">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Archivo original</th>
+                <th class="col-num">Original</th>
+                <th class="col-num">Convertido</th>
+                <th class="col-num">Reducción</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REFERENCIA RÁPIDA ── -->
+    <section class="col col-guide">
+      <div class="section-title">
+        <span class="section-num section-num-muted">?</span>
+        <h2>Referencia rápida</h2>
+      </div>
+      <div class="guide-grid">
+        <details class="g-item">
+          <summary>Formatos de salida</summary>
+          <p><strong>WEBP</strong> — Ideal para web, buen peso/calidad.<br>
+          <strong>AVIF</strong> — Mejor compresión, más lento de codificar.<br>
+          <strong>JPEG</strong> — Fotos con pérdidas, clásico y compatible.<br>
+          <strong>PNG</strong> — Sin pérdidas, ideal para transparencias.<br>
+          <strong>TIFF</strong> — Uso profesional y archivo.</p>
+        </details>
+        <details class="g-item">
+          <summary>Calidad y esfuerzo</summary>
+          <p>Calidad <strong>70–85</strong> es el punto óptimo para web. Mayor esfuerzo produce archivos más pequeños pero tarda más.</p>
+        </details>
+        <details class="g-item">
+          <summary>Redimensionar (ancho y alto)</summary>
+          <p>Solo indicas el <strong>ancho máximo</strong>. El <strong>alto se calcula solo</strong> para mantener la proporción original — no se deforma la imagen. Una foto 3000×2000 (ratio 3:2) se reescala a 1200×800. Si la imagen ya es más pequeña que el ancho indicado, se deja sin cambios. Déjalo apagado si ya pre-procesaste las fotos en Canva, Figma o Photoshop.</p>
+        </details>
+        <details class="g-item">
+          <summary>Renombrado en lote</summary>
+          <p>Con prefijo <em>clinica-pilar</em> e inicio <em>1</em>, obtienes <strong>clinica-pilar-01.webp</strong>, <strong>clinica-pilar-02.webp</strong>, etc. Si el toggle está apagado, se mantienen los nombres originales.</p>
+        </details>
+        <details class="g-item">
+          <summary>Eliminar metadatos</summary>
+          <p>Quita EXIF, GPS, creador, software y perfil ICC. Reduce el peso del archivo y protege tu privacidad al compartir.</p>
+        </details>
+        <details class="g-item">
+          <summary>Nombre del archivo ZIP</summary>
+          <p>Cada descarga incluye <strong>fecha y hora</strong> en el nombre, por ejemplo <em>convertidos_20260423_114305.zip</em>, para que nunca se sobreescriban ni se confundan entre lotes.</p>
+        </details>
+      </div>
     </section>
 
   </main>
